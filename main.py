@@ -28,3 +28,20 @@ def login_for_access_token(user_id: str = "user_dev_404"):
         f"POST routed to auth controller for {user_id}",
         (time.perf_counter() - t0) * 1000 # convert to ms
     )
+
+    # Auth sign-in
+    t1 = time.perf_counter()
+    token = create_access_token(subject=user_id)
+    tracer.record_span(
+        "AUTH", 
+        "SIGN_JWT", 
+        "SUCCESS", 
+        "Generated 256-bit signed token", 
+        (time.perf_counter() - t1) * 1000
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "telemetry": tracer.finalize()
+    }
