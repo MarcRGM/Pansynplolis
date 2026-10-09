@@ -20,3 +20,11 @@ def login_for_access_token(user_id: str = "user_dev_404"):
     tracer = ExecutionTracer("/api/v1/auth/token")
 
     # Gateway ingress
+    t0 = time.perf_counter()
+    tracer.record_span(
+        "GATEWAY",
+        "ROUTE_DISPATCH",
+        "SUCCESS",
+        f"POST routed to auth controller for {user_id}",
+        (time.perf_counter() - t0) * 1000 # convert to ms
+    )
