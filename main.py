@@ -13,3 +13,10 @@ app = FastAPI(title="Pansynpolis Telemetry Engine")
 def serve_dashboard():
     """Serves the single-page visual telemetry dashboard."""
     return FileResponse("index.html")
+
+@app.post("/api/v1/auth/token")
+def login_for_access_token(user_id: str = "user_dev_404"):
+    """API Gateway & Auth: Generates a signed JWT for testing."""
+    tracer = ExecutionTracer("/api/v1/auth/token")
+
+    # Gateway ingress
