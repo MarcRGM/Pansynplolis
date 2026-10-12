@@ -19,25 +19,25 @@ def login_for_access_token(user_id: str = "user_dev_404"):
     """API Gateway & Auth: Generates a signed JWT for testing."""
     tracer = ExecutionTracer("/api/v1/auth/token")
 
-    # Gateway ingress
-    t0 = time.perf_counter()
+    # Layer 1 - Gateway ingress
+    t_start = time.perf_counter()
     tracer.record_span(
         "GATEWAY",
         "ROUTE_DISPATCH",
         "SUCCESS",
         f"POST routed to auth controller for {user_id}",
-        (time.perf_counter() - t0) * 1000 # convert to ms
+        (time.perf_counter() - t_start) * 1000 # convert to ms
     )
 
-    # Auth sign-in
-    t1 = time.perf_counter()
+    # Layer 2 - Auth sign-in
+    t_auth = time.perf_counter()
     token = create_access_token(subject=user_id)
     tracer.record_span(
         "AUTH", 
         "SIGN_JWT", 
         "SUCCESS", 
         "Generated 256-bit signed token", 
-        (time.perf_counter() - t1) * 1000
+        (time.perf_counter() - t_auth) * 1000
     )
 
     return {
@@ -45,3 +45,18 @@ def login_for_access_token(user_id: str = "user_dev_404"):
         "token_type": "bearer",
         "telemetry": tracer.finalize()
     }
+
+@app.get("/api/v1/users/{user_id}/profile")
+def get_user_profile(user_id: str, authorization: str | None = Header(None)): # Let FastAPI know authorization is in Header
+    """Full-stack request lifecycle with execution tracing"""
+    tracer = ExecutionTracer(f"/api/users/{user_id}/profile")
+
+    # Layer 1 - Gateway ingress
+    t_start = time.perf_counter()
+    tracer.record_span(
+        "GATEWAY",
+        "INGRESS_HTTP",
+        "SUCCESS",
+        f"Received GET request for user {user_id}",
+        (time.perf_counter() - t_start) * 1000
+    )
