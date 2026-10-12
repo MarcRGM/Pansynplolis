@@ -101,5 +101,28 @@ def get_user_profile(user_id: str, authorization: str | None = Header(None)): # 
         (time.perf_counter() - t_auth) * 1000
     )
     
-    # 
+    # Layer 3 - Cache (Redis)
+    t_cache = time.perf_counter()
+    cached_record = get_from_cache(user_id)
+    cache_duration = (time.perf_counter() - t_cache) * 1000
 
+    if cached_record:
+        tracer.record_span(
+            "CACHE",
+            "REDIS_GET",
+            "HIT",
+            f"Retrieved profile from in-memory key: {user_id}",
+            cache_duration
+        )
+        return {
+            "source": "REDIS_CACHE_HIT",
+            "data": cached_record,
+            "telemetry": tracer.finalize()
+        }
+
+    tracer.record_span(
+        "CACHE",
+        "REDIS_GET",
+        "MISS",
+        f"Key not present in cache: {user_id}"
+    )
