@@ -60,3 +60,46 @@ def get_user_profile(user_id: str, authorization: str | None = Header(None)): # 
         f"Received GET request for user {user_id}",
         (time.perf_counter() - t_start) * 1000
     )
+
+    # Layer 2 - Auth validation
+    t_auth = time.perf_counter()
+    # Missing or malformed atuh header
+    if not authorization or not authorization.startswith("Bearer "):
+        tracer.record_span(
+            "AUTH",
+            "VERIFY_TOKEN",
+            "BLOCKED",
+            "Missing or malformed Authorization header",
+            (time.perf_counter() - t_auth) * 1000
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "Unauthorizzed", "telemetry": tracer.finalize()}  
+        )
+
+    token = authorization.split(" ")[1] # take only the token ([0] = "Bearer", [1] = token string)
+    is_valid, claims, reason = verify_access_token(token)
+    if not is_valid:
+        tracer.record_span(
+            "AUTH",
+            "VERIFY_TOKEN",
+            "BLOCKED",
+            reason,
+            (time.perf_counter() - t_auth) * 1000
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": "Unauthorizzed", "telemetry": tracer.finalize()}
+        )
+
+    # Success
+    tracer.record_span(
+        "AUTH",
+        "VERIFY_TOKEN",
+        "SUCCESS",
+        f"Authenticated subject: {claims.get('sub')}",
+        (time.perf_counter() - t_auth) * 1000
+    )
+    
+    # 
+
