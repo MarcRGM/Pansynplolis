@@ -9,7 +9,7 @@ ALGORITHM = os.getenv("ALGORITHM") # Algo is optional to put on .env, easier to 
 def create_access_token(subject: str, role: str = "member") -> str:
     """Generates a signed JWT"""
     payload: Dict = {
-        "sub": subject,
+        "sub": subject, # Identifier
         "role": role,
         "iat": int(time.time()), # Issued at
         "exp": int(time.time()) + 3600 # Expires in 1 hour
