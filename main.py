@@ -126,3 +126,31 @@ def get_user_profile(user_id: str, authorization: str | None = Header(None)): # 
         "MISS",
         f"Key not present in cache: {user_id}"
     )
+
+    # Layer 4 - Database (PostgreSQL)
+    t_db = time.perf_counter()
+    record = query_database(user_id)
+    db_duration = (time.perf_counter() - t_db) * 1000
+
+    if not record:
+        tracer.record_span(
+            "DATABASE",
+            "POSTGRE_SELECT",
+            "NOT_FOUND",
+            f"Row not found for {user_id}",
+            db_duration
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "Record not found", "telemetry": tracer.finalize()}
+        )
+
+    tracer.record_span(
+        "DATABASE",
+        "POSTGRE_SELECT",
+        "SUCCESS",
+        f"Indexed scan returned row for {user_id}",
+        db_duration
+    )
+
+    
