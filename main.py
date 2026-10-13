@@ -153,4 +153,19 @@ def get_user_profile(user_id: str, authorization: str | None = Header(None)): # 
         db_duration
     )
 
-    
+    # Layer 5 - Cache Invalidation / Hydration
+    t_hydrate = time.perf_counter()
+    set_in_cache(user_id, record)
+    tracer.record_span(
+        "CACHE",
+        "REDIS_SETEX",
+        "SUCCESS",
+        f"Populated cache key  {user_id} (TTL=3600s)",
+        (time.perf_counter() - t_hydrate) * 1000
+    )
+
+    return {
+        "source": "POSTGRESQL_FETCH",
+        "data": record,
+        "telemetry": tracer.finalize()
+    }
