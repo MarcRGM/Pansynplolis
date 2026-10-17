@@ -168,4 +168,10 @@ def get_user_profile(user_id: str, authorization: str | None = Header(None)): # 
         "source": "POSTGRESQL_FETCH",
         "data": record,
         "telemetry": tracer.finalize()
-    }
+    }      
+
+@app.post("/api/v1/cache/flush")
+def purge_system_cache():
+    """Manual cache eviction endpoint."""
+    flush_cache()
+    return {"message": "Redis cache store invalidated sucessfully"}
